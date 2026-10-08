@@ -1,0 +1,28 @@
+services:
+  postgres-test:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: test_auth_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_auth_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-U", "test_user", "-d", "test_auth_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  flyway:
+    image: flyway/flyway:9
+    command: -url=jdbc:postgresql://postgres-test:5432/test_auth_db -user=test_user -password=test_pass migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+
+volumes:
+  postgres_auth_test_data:

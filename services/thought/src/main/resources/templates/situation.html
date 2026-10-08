@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Situation</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+    </head>
+    <body class="bg-gray-100 font-sans">
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+                <div class="p-6 border-b">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-seedling"></i> Thought audit
+                    </h1>
+                    <p class="text-sm text-gray-500 mt-1">Живи спокойно и свободно</p>
+                </div>
+
+                <div class="p-3">
+                    <button onclick="window.location.href='/situations'" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium">
+                        <i class="fa-solid fa-house w-5"></i><span>Home</span>
+                    </button>
+                    <bitton onclick="window.location.href='/situations/new'" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium">
+                        <i class="fa-solid fa-list-check w-5"></i><span>New Tasks</span>
+                    </bitton>
+                    <button onclick="window.location.href='/situations'" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium">
+                        <i class="fa-solid fa-folder w-5"></i><span>Log out</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 overflow-auto">
+                <div class="p-8">
+                    <div class="p-8 max-w-4xl mx-auto">
+
+                        <!-- Header -->
+                        <div class="flex justify-between items-center mb-10 pl-5 pr-5">
+                            <h2 class="text-3xl font-semibold text-gray-900">Описание ситуации</h2>
+                            <a href="/situations"
+                               class="text-gray-500 hover:text-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>Назад к списку</span>
+                            </a>
+                        </div>
+
+                        <form th:action="@{/situations/{id}(id=${situation.getId()})}" method="post" class="bg-white rounded-3xl shadow-sm p-10 space-y-8">
+                            <!-- === Поле Description с inline-редактированием === -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">
+                                    Описание ситуации
+                                </label>
+                                <!-- Блок просмотра (видно по умолчанию) -->
+                                <div id="description-view"
+                                     th:text="${situation.getDescription()}"
+                                     class="w-full px-7 py-6 bg-gray-50 border border-transparent hover:border-gray-300 rounded-3xl min-h-[130px] cursor-pointer transition-all duration-200 text-[17px] leading-relaxed text-gray-800">
+                                </div>
+                                <!-- Поле редактирования (скрыто по умолчанию) -->
+                                <textarea id="description-edit"
+                                          name="description"
+                                          rows="3"
+                                          th:text="${situation.getDescription()}"
+                                          class="hidden w-full px-6 py-5 border border-green-500 rounded-3xl focus:outline-none resize-y text-lg"
+                                          tabindex="0">
+                                </textarea>
+                            </div>
+
+                            <!-- Thoughts -->
+                            <div id="thoughts-grid" class="grid grid-cols-1 md:grid-cols-1 gap-6">
+                                <!-- Заголовки -->
+                                <div class="thought-pair grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="block text-sm font-medium text-gray-700 mb-1">Критическая мысль</div>
+                                    <div class="block text-sm font-medium text-gray-700 mb-1">Реальная мысль</div>
+                                </div>
+
+                                <!-- Динамический вывод мыслей из situation.thoughts -->
+                                <div th:each="thought, iter : ${situation.getSortedThoughts()}" class="thought-pair grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Критическая мысль -->
+                                    <input type="hidden"
+                                           th:name="'thoughts[' + ${iter.index} + '].id'"
+                                           th:value="${thought.getId()}"/>
+                                    <div class="mb-4">
+                                        <div class="thought-view bg-gray-50 border border-transparent hover:border-gray-300 rounded-3xl px-7 py-6 min-h-[110px] cursor-pointer transition-all duration-200 text-[17px] leading-relaxed text-gray-800"
+                                             th:data-index="${iter.index}"
+                                             th:data-field="critical"
+                                             th:text="${thought.getCriticalContent()}"
+                                             tabindex="0">
+                                        </div>
+                                        <textarea class="thought-edit hidden w-full px-6 py-5 border border-green-500 rounded-3xl focus:outline-none resize-y text-lg overflow-hidden" rows="2"
+                                                  th:name="'thoughts[' + ${iter.index} + '].criticalContent'"
+                                                  th:text="${thought.getCriticalContent()}">
+                                        </textarea>
+                                    </div>
+
+                                    <!-- Реальная мысль -->
+                                    <div class="mb-4">
+                                        <div class="thought-view bg-gray-50 border border-transparent hover:border-gray-300 rounded-3xl px-7 py-6 min-h-[110px] cursor-pointer transition-all duration-200 text-[17px] leading-relaxed text-gray-800"
+                                             th:data-index="${iter.index}"
+                                             th:data-field="real"
+                                             th:text="${thought.getRealContent()}"
+                                             tabindex="0">
+                                        </div>
+                                        <textarea class="thought-edit hidden w-full px-6 py-5 border border-green-500 rounded-3xl focus:outline-none resize-y text-lg overflow-hidden" rows="2"
+                                                  th:name="'thoughts[' + ${iter.index} + '].realContent'"
+                                                  th:text="${thought.getRealContent()}">
+                                        </textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <button id="add-thought" type="button">
+                                    <span class="text-2xl leading-none text-green-700">+</span>
+                                    <span class="font-medium">Добавить мысль</span>
+                                </button>
+                            </div>
+                            <div class="flex gap-4 pt-8 border-t">
+                                <button type="submit"
+                                        class="flex-1 bg-black hover:bg-gray-800 text-white py-5 rounded-3xl font-semibold text-lg transition flex items-center justify-center gap-3">
+                                    Редактировать ситуацию
+                                </button>
+
+                                <a href="/situations"
+                                   class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-5 rounded-3xl font-semibold text-lg transition text-center">
+                                    Отмена
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', () => {
+                // Description
+                const viewDesc = document.getElementById('description-view');
+                const editDesc = document.getElementById('description-edit');
+
+                let currentText = '';
+
+                viewDesc.addEventListener('click', () => {
+                    viewDesc.classList.add('hidden');
+                    editDesc.classList.remove('hidden');
+                    editDesc.focus();
+                });
+
+                editDesc.addEventListener('blur', () => {
+                    currentText = editDesc.value.trim();
+
+                    viewDesc.textContent = currentText;
+
+                    editDesc.classList.add('hidden');
+                    viewDesc.classList.remove('hidden');
+                });
+
+                // Thoughts
+                const grid = document.getElementById('thoughts-grid');
+
+                function attachViewHandlers() {
+                    document.querySelectorAll('.thought-view').forEach(view => {
+                        const editArea = view.parentElement.querySelector('.thought-edit');
+
+                        if (!editArea) return;
+
+                        view.addEventListener('click', () => {
+                            view.classList.add('hidden');
+                            editArea.classList.remove('hidden');
+                            editArea.focus();
+                        });
+
+                        editArea.addEventListener('blur', () => {
+                            let newText = editArea.value.trim();
+
+                            // Обновляем текст в блоке просмотра
+                            view.textContent = newText;
+
+                            view.classList.remove('hidden');
+                            editArea.classList.add('hidden');
+                        });
+
+                        view.addEventListener('keydown', (e) => {
+                            if (e.key === 'Tab') {
+                                e.preventDefault(); // предотвращаем стандартный Tab
+                                view.classList.add('hidden');
+                                editArea.classList.remove('hidden');
+
+                                setTimeout(() => {
+                                    editArea.focus();
+                                }, 10);
+                            }
+                        });
+                    });
+                }
+
+                attachViewHandlers();
+                attachAutoResize();
+                attachSync();
+
+                // ====================== СИНХРОНИЗАЦИЯ ВЫСОТЫ ======================
+                function syncPairHeights(pair) {
+                    const textareas = pair.querySelectorAll('.thought-edit');
+                    const textareasView = pair.querySelectorAll('.thought-view');
+                    if (textareas.length !== 2) return;
+
+                    const left = textareas[0];
+                    const right = textareas[1];
+
+                    const leftView = textareasView[0];
+                    const rightView = textareasView[1];
+
+                    left.style.overflowY = 'hidden';
+                    right.style.overflowY = 'hidden';
+
+                    leftView.style.overflowY = 'hidden';
+                    rightView.style.overflowY = 'hidden';
+
+                    // Сбрасываем высоту для правильного расчёта
+                    left.style.height = 'auto';
+                    right.style.height = 'auto';
+
+                    leftView.style.height = 'auto';
+                    rightView.style.height = 'auto';
+
+                    requestAnimationFrame(() => {
+                        const maxHeight = Math.max(left.scrollHeight, right.scrollHeight, leftView.scrollHeight, rightView.scrollHeight, 110);
+                        left.style.height = maxHeight + 'px';
+                        right.style.height = maxHeight + 'px';
+
+                        leftView.style.height = maxHeight + 'px';
+                        rightView.style.height = maxHeight + 'px';
+                    });
+                }
+
+                function attachSync() {
+                    document.querySelectorAll('.thought-pair').forEach(pair => {
+                        const textareas = pair.querySelectorAll('.thought-edit');
+
+                        textareas.forEach(textarea => {
+                            // Удаляем старый обработчик, если есть
+                            if (textarea._syncHandler) {
+                                textarea.removeEventListener('input', textarea._syncHandler);
+                            }
+                            textarea._syncHandler = () => syncPairHeights(pair);
+                            textarea.addEventListener('input', textarea._syncHandler);
+                        });
+
+                        syncPairHeights(pair); // начальная синхронизация
+                    });
+                }
+
+                // Add thought button
+                let nextIndex = /*[[${situation?.getThoughts()?.size() ?: 0}]]*/ 0;
+
+                const addButton = document.getElementById('add-thought');
+                if (addButton) {
+                    console.log("It exists");
+                    addButton.addEventListener('click', () => {
+                        const grid = document.getElementById('thoughts-grid');
+
+                        const newPairHTML = `
+                            <div class="thought-pair grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="mb-4">
+                                        <div class="thought-view bg-gray-50 border border-transparent hover:border-gray-300 rounded-3xl px-7 py-6 min-h-[110px] cursor-pointer transition-all duration-200 text-[17px] leading-relaxed text-gray-800"
+                                             data-index="${nextIndex}"
+                                             data-field="critical"
+                                             tabindex="0">
+                                        </div>
+                                        <textarea class="thought-edit hidden w-full px-6 py-5 border border-green-500 rounded-3xl focus:outline-none resize-y text-lg overflow-hidden" rows="2"
+                                                  name="thoughts[${nextIndex}].criticalContent">
+                                        </textarea>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <div class="thought-view bg-gray-50 border border-transparent hover:border-gray-300 rounded-3xl px-7 py-6 min-h-[110px] cursor-pointer transition-all duration-200 text-[17px] leading-relaxed text-gray-800"
+                                             data-index="${nextIndex}"
+                                             data-field="real"
+                                             tabindex="0">
+                                        </div>
+                                        <textarea class="thought-edit hidden w-full px-6 py-5 border border-green-500 rounded-3xl focus:outline-none resize-y text-lg overflow-hidden" rows="2"
+                                                  name="thoughts[${nextIndex}].realContent">
+                                        </textarea>
+                                    </div>
+                                </div>
+                            `;
+
+                        grid.insertAdjacentHTML('beforeend', newPairHTML);
+
+                        nextIndex++;
+                        attachViewHandlers(); // Подключаем обработчики к новым элементам
+                        attachAutoResize();
+                        setTimeout(attachSync, 10);
+                    });
+                }
+                // Авто-ресайз textarea
+                function autoResizeTextarea(textarea) {
+                    textarea.style.height = 'auto';           // сбрасываем высоту
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                }
+
+                // Применяем ко всем textarea
+                function attachAutoResize() {
+                    document.querySelectorAll('.thought-edit').forEach(textarea => {
+
+                        // При вводе текста
+                        textarea.addEventListener('input', () => {
+                            autoResizeTextarea(textarea);
+                        });
+
+                        // При показе (после переключения из view-режима)
+                        if (!textarea.classList.contains('hidden')) {
+                            setTimeout(() => autoResizeTextarea(textarea), 10);
+                        }
+                    });
+                }
+            });
+        </script>
+    </body>
+</html>

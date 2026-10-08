@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+        <style>
+            .task-card {
+              transition: all 0.2s ease;
+            }
+            .task-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            }
+        </style>
+    <head>
+    <body class="bg-neutral-50 font-sans">
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+                <div class="p-6 border-b">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-seedling"></i> Thought audit
+                    </h1>
+                    <p class="text-sm text-gray-500 mt-1">Живи спокойно и свободно</p>
+                </div>
+                <div class="p-3">
+                    <button onclick="window.location.href='/api/situations/edited'" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 rounded-xl font-medium text-lg">
+                        <i class="fa-solid fa-house w-5"></i>
+                        <span>Home</span>
+                    </button>
+                    <button onclick="window.location.href='/situations/new'" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 rounded-xl font-medium text-lg">
+                        <i class="fa-solid fa-list-check w-5"></i>
+                        <span>New Tasks</span>
+                    </button>
+                    <button onclick="window.location.href='/api/situations'" class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium text-lg">
+                        <i class="fa-solid fa-folder w-5"></i>
+                        <span>Log out</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Main Content -->
+            <div class="flex-1 overflow-auto">
+                <div class="p-8">
+                    <div class="max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start mb-10">
+                            <div>
+                                <h2 class="text-3xl font-semibold text-gray-900">Welcome back, Mide!</h2>
+                                <p class="text-gray-600 mt-1">A to-do list app that helps keep track of your day to day activities</p>
+                            </div>
+                            <button class="bg-black text-white px-6 py-3 rounded-2xl hover:shadow-2xl hover:border-gray-200 hover:-translate-y-0.5 flex items-center gap-2 transition"
+                                    onclick="window.location.href='/situations/new'">
+                                <i class="fa-solid fa-plus"></i>
+                                Add New Task
+                            </button>
+                        </div>
+                        <!-- Tabs -->
+                        <div class="flex gap-2 mb-8 border-b pb-px">
+                            <button onclick="window.location.href='/situations/edited'" id="edited-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700">In Progress</button>
+                            <button onclick="window.location.href='/situations/done'" id="done-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700">Completed</button>
+                            <button onclick="window.location.href='/situations'" id="all-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700">All Tasks</button>
+                        </div>
+
+                        <div id="situationContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            const originalFetch = window.fetch;
+
+            window.fetch = async function(...args) {
+                const response = await originalFetch(...args);
+
+                if (response.status === 401) {
+                    window.location.href = "/auth/login";
+                    return Promise.reject(new Error("Unauthorized"));
+                }
+
+                return response;
+            };
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                function abbreviate(text, maxLength) {
+                    if (!text) return '';
+                    if (text.length <= maxLength) return text;
+
+                    return text.slice(0, maxLength) + '...';
+                }
+                const pathSegments = window.location.pathname.split('/');
+                let url = '';
+
+                if (window.location.pathname == '/situations') {
+                    url = '/api/situations';
+                } else if (window.location.pathname == '/situations/done') {
+                    url = '/api/situations/done';
+                } else {
+                    url = '/api/situations/edited';
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const container = document.getElementById('situationContainer');
+
+                    container.innerHTML = data.situations.sort((a, b) =>  new Date(a.createDate) - new Date(b.createDate)).map(situation => `
+                        <div>
+                            <a href="/situations/${situation.id}" class="block group">
+                                <div class="bg-white rounded-3xl p-6 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 h-[160px] flex flex-col group relative overflow-hidden">
+
+                                    <!-- Основное содержание -->
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-[17px] leading-tight text-gray-800 line-clamp-3 group-hover:text-gray-700 transition-colors duration-200">
+                                            ${abbreviate(situation.description, 85)}
+                                        </h3>
+                                    </div>
+
+                                    <!-- Нижняя часть -->
+                                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+
+                                        <!-- Мысли -->
+                                        <div class="flex items-center gap-2 text-gray-500">
+                                            <i class="fa-solid fa-lightbulb text-amber-500 text-lg"></i>
+                                            <span class="text-sm font-medium"
+                                                  text="${situation.thoughts != null ? situation.thoughts.length + ' thoughts' : 'No thoughts'}">
+                                            </span>
+                                        </div>
+
+                                        <!-- Статус -->
+                                        <div class="flex items-center">
+                                            ${situation.status == 'EMPTY' ? `
+                                                <div class="flex items-center gap-1.5 text-amber-500">
+                                                    <i class="fa-solid fa-circle-notch text-xl"></i>
+                                                    <span class="text-xs font-medium tracking-wider">NEW</span>
+                                                </div>
+                                            ` : situation.status == 'EDITED' ? `
+                                                <div class="flex items-center gap-1.5 text-blue-500">
+                                                    <i class="fa-solid fa-circle-half-stroke text-xl"></i>
+                                                    <span class="text-xs font-medium tracking-wider">IN PROGRESS</span>
+                                                </div>
+                                            ` : `
+                                                <div class="flex items-center gap-1.5 text-emerald-500">
+                                                    <i class="fa-solid fa-circle-check text-xl"></i>
+                                                    <span class="text-xs font-medium tracking-wider">DONE</span>
+                                                </div>
+                                            `}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    `).join('');
+
+                    const inProgressTab = document.getElementById('edited-tab');
+                    const completeTab = document.getElementById('done-tab');
+                    const allTasksTab = document.getElementById('all-tab');
+                    if (data.type == 'edited') {
+                        inProgressTab.classList.add('border-b-2', 'border-black', 'text-black');
+                    } else if (data.type == 'done') {
+                        completeTab.classList.add('border-b-2', 'border-black', 'text-black');
+                    } else if (data.type === 'all') {
+                        allTasksTab.classList.add('border-b-2', 'border-black', 'text-black');
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

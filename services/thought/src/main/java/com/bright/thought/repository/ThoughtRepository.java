@@ -1,0 +1,13 @@
+package com.bright.thought.repository;
+
+import com.bright.thought.entity.ThoughtEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface ThoughtRepository extends JpaRepository<ThoughtEntity, UUID> {
+    List<ThoughtEntity> findBySituationId(UUID situationId);
+}
