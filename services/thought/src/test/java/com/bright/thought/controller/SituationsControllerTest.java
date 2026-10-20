@@ -3,6 +3,7 @@ package com.bright.thought.controller;
 import com.bright.thought.dto.SituationRequest;
 import com.bright.thought.dto.ThoughtRequest;
 import com.bright.thought.security.AppUser;
+import com.bright.thought.service.KafkaLogProducer;
 import com.bright.thought.service.SituationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,7 +46,6 @@ public class SituationsControllerTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("spring.flyway.enabled", () -> "true");
     }
 
@@ -51,6 +53,9 @@ public class SituationsControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private SituationService situationService;
+
+    @MockBean
+    private KafkaLogProducer kafkaLogProducer;
 
     UUID user1Id = UUID.randomUUID();
     UUID user2Id = UUID.randomUUID();
@@ -96,6 +101,8 @@ public class SituationsControllerTest {
     // getSituations
     @Test
     void getSituationsForCurrentUser() throws Exception {
+        doNothing().when(kafkaLogProducer).sendLog("logLevel", "message");
+
         mockMvc.perform(get("/api/situations")
                 .header("X-User-Id", user1Id)
                 .with(authentication(
@@ -112,6 +119,8 @@ public class SituationsControllerTest {
     // getEditedSituations
     @Test
     void getEditedSituationsForCurrentUser() throws Exception {
+        doNothing().when(kafkaLogProducer).sendLog("logLevel", "message");
+
         mockMvc.perform(get("/api/situations/edited")
                 .header("X-User-Id", user1Id)
                 .with(authentication(
@@ -128,6 +137,8 @@ public class SituationsControllerTest {
     // getDoneSituations
     @Test
     void getDoneSituationsForCurrentUser() throws Exception {
+        doNothing().when(kafkaLogProducer).sendLog("logLevel", "message");
+
         mockMvc.perform(get("/api/situations/done")
                 .header("X-User-Id", user1Id)
                 .with(authentication(
@@ -144,6 +155,8 @@ public class SituationsControllerTest {
     // getSituation
     @Test
     void getSituationById() throws Exception {
+        doNothing().when(kafkaLogProducer).sendLog("logLevel", "message");
+
         String url = "/api/situations/" + emptySituation1.getId();
 
         mockMvc.perform(get(url)
