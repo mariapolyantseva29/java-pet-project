@@ -66,7 +66,6 @@ public class AuthenticationController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
     }
 }

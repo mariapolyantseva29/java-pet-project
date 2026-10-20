@@ -1,4 +1,4 @@
-package com.bright.auth_service.dto;
+ package com.bright.auth_service.dto;
 
 import jakarta.validation.constraints.NotNull;
 
