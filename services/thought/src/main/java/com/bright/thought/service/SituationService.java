@@ -1,16 +1,21 @@
 package com.bright.thought.service;
 
 import com.bright.thought.dto.SituationRequest;
+import com.bright.thought.dto.ThoughtRequest;
 import com.bright.thought.entity.SituationEntity;
 import com.bright.thought.entity.ThoughtEntity;
 import com.bright.thought.exception.ResourceNotFoundException;
 import com.bright.thought.repository.SituationRepository;
 import com.bright.thought.repository.ThoughtRepository;
 import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class SituationService {
@@ -59,22 +64,21 @@ public class SituationService {
                 userId,
                 situationToCreate.getDescription()
         );
-        SituationEntity savedSituation = situationRepository.save(situation);
+        situationRepository.save(situation);
 
-        situationToCreate.getThoughts()
+        List<ThoughtEntity> newThoughts = situationToCreate.getThoughts()
                 .stream()
                 .filter(t -> t.getCriticalContent() != null && !t.getCriticalContent().isBlank())
-                .forEach(thoughtRequest -> {
-            ThoughtEntity thoughtEntity = new ThoughtEntity(
-                    savedSituation,
+                .map(thoughtRequest -> new ThoughtEntity(
+                    situation,
                     thoughtRequest.getCriticalContent(),
                     thoughtRequest.getRealContent()
-            );
-            ThoughtEntity savedThought = thoughtRepository.save(thoughtEntity);
-            savedSituation.addThought(savedThought);
-        });
+                )).collect(Collectors.toList());
 
-        return mapper.toSituationRequest(savedSituation);
+        thoughtRepository.saveAll(newThoughts);
+        situation.setThoughts(newThoughts);
+
+        return mapper.toSituationRequest(situation);
     }
 
     @Transactional
@@ -84,16 +88,16 @@ public class SituationService {
 
         situation.setDescription(situationRequest.getDescription());
 
+        List<ThoughtEntity> newThoughts = new ArrayList<>();
+        List<ThoughtEntity> updatedThoughts = new ArrayList<>();
+
         situationRequest.getThoughts().stream().forEach(thoughtRequest -> {
             if (thoughtRequest.getId() == null) {
-                ThoughtEntity thoughtEntity = new ThoughtEntity(
+                newThoughts.add(new ThoughtEntity(
                         situation,
                         thoughtRequest.getCriticalContent(),
                         thoughtRequest.getRealContent()
-                );
-
-                ThoughtEntity savedThought = thoughtRepository.save(thoughtEntity);
-                situation.addThought(savedThought);
+                ));
             } else {
                 ThoughtEntity thoughtEntity = thoughtRepository.findById(thoughtRequest.getId())
                         .orElseThrow(() -> new ResourceNotFoundException("Thought", thoughtRequest.getId()));
@@ -101,11 +105,20 @@ public class SituationService {
                 thoughtEntity.setCriticalContent(thoughtRequest.getCriticalContent());
                 thoughtEntity.setRealContent(thoughtRequest.getRealContent());
 
-                thoughtRepository.save(thoughtEntity);
+                updatedThoughts.add(thoughtEntity);
             }
         });
 
-        situationRepository.save(situation);
+        if (!newThoughts.isEmpty()) {
+            thoughtRepository.saveAll(newThoughts);
+        }
+        if (!updatedThoughts.isEmpty()) {
+            thoughtRepository.saveAll(updatedThoughts);
+        }
+        List<ThoughtEntity> allThoughts = Stream.concat(newThoughts.stream(), updatedThoughts.stream())
+                                                .collect(Collectors.toList());
+
+        situation.setThoughts(allThoughts);
 
         return mapper.toSituationRequest(situation);
     }

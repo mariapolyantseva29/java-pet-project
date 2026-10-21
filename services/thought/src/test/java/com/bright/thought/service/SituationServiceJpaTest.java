@@ -226,8 +226,10 @@ public class SituationServiceJpaTest {
 
         SituationRequest created = serviceService.createSituation(userId, request);
 
+        assertNotNull(created.getId());
         assertEquals(description, created.getDescription());
         assertEquals(1, created.getThoughts().size());
+        assertNotNull(created.getThoughts().get(0).getId());
         assertEquals("Real content", created.getThoughts().get(0).getRealContent());
     }
 
@@ -307,7 +309,7 @@ public class SituationServiceJpaTest {
 
         String newCriticalContent = "New critical content";
         ThoughtRequest newThought = new ThoughtRequest(null, newCriticalContent, "Real content");
-        thoughts = new ArrayList<>(List.of(newThought));
+        thoughts = new ArrayList<>(List.of(newThought, created.getThoughts().get(0)));
 
         SituationRequest requestForUpdate = new SituationRequest(created.getId(), description, thoughts);
 

@@ -75,12 +75,12 @@ public class UserServiceUnitTest {
     @Test
     void createUser() {
         when(repository.save(any(UserEntity.class))).thenReturn(userEntity);
-        when(mapperService.toUserRecord(userEntity)).thenReturn(userRecord);
+        when(mapperService.toUserRecord(any(UserEntity.class))).thenReturn(userRecord);
 
         assertEquals(userRecord, userService.createUser(email, name, password));
 
         verify(repository, times(1)).save(any(UserEntity.class));
-        verify(mapperService, times(1)).toUserRecord(userEntity);
+        verify(mapperService, times(1)).toUserRecord(any(UserEntity.class));
     }
 
     // updateUser
