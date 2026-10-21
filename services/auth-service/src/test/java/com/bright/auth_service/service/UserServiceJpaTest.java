@@ -24,8 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -93,6 +92,7 @@ public class UserServiceJpaTest {
 
         Optional<UserEntity> foundUser = repository.findById(createdUser.id());
 
+        assertNotNull(foundUser.get().getId());
         assertEquals(name, foundUser.get().getName());
         assertEquals(email, foundUser.get().getEmail());
     }

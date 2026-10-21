@@ -55,9 +55,9 @@ public class UserService {
 
         UserEntity userEntity = new UserEntity(email, name, encodedPassword);
 
-        UserEntity savedEntity = repository.save(userEntity);
+        repository.save(userEntity);
 
-        return mapperService.toUserRecord(savedEntity);
+        return mapperService.toUserRecord(userEntity);
     }
 
     @Transactional
